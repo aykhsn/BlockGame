@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        const config = {
+            type: Phaser.AUTO,
+            width: window.innerWidth,
+            height: window.innerHeight,
+            backgroundColor: '#ffffff',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 300 },
+                    debug: false
+                }
+            },
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH
+            },
+            scene: {
+                preload: preload,
+                create: create,
+                update: update
+            }
+        };
+
+        const game = new Phaser.Game(config);
+
+        function preload() {
+            this.load.audio('pui', 'assets/pui.mp3');
+        }
+
+        function create() {
+            this.colors = [
+                0xff9999, 0x99ff99, 0x9999ff, 0xffff99, 
+                0xff99ff, 0x99ffff, 0xff6666, 0x66ff66, 
+                0x6666ff, 0xffff66, 0xff66ff, 0x66ffff
+            ];
+            this.shapes = ['rectangle', 'square', 'hexagon'];
+            this.puiSound = this.sound.add('pui');
+
+            this.nextBlockTime = 0;
+
+            this.blocks = this.physics.add.group({
+                bounceX: 1,
+                bounceY: 0.5,
+                collideWorldBounds: true
+            });
+
+            this.physics.add.collider(this.blocks, this.blocks);
+
+            this.input.on('gameobjectdown', function (pointer, gameObject) {
+                this.tweens.add({
+                    targets: gameObject,
+                    scaleX: 0,
+                    scaleY: 0,
+                    alpha: 0,
+                    duration: 300,
+                    ease: 'Power1',
+                    onComplete: function () {
+                        gameObject.destroy();
+                    }
+                });
+                this.puiSound.play();
+            }, this);
+        }
+
+        function update(time) {
+            if (time > this.nextBlockTime) {
+                this.nextBlockTime = time + 2000;
+
+                const shape = Phaser.Utils.Array.GetRandom(this.shapes);
+                const color = Phaser.Utils.Array.GetRandom(this.colors);
+
+                let block;
+
+                if (shape === 'rectangle') {
+                    block = this.add.rectangle(
+                        Phaser.Math.Between(50, window.innerWidth - 50),
+                        0,
+                        200,
+                        100,
+                        color
+                    ).setStrokeStyle(3, 0x000000);
+                } else if (shape === 'square') {
+                    block = this.add.rectangle(
+                        Phaser.Math.Between(50, window.innerWidth - 50),
+                        0,
+                        100,
+                        100,
+                        color
+                    ).setStrokeStyle(3, 0x000000);
+                } else if (shape === 'hexagon') {
+                    block = this.add.polygon(
+                        Phaser.Math.Between(50, window.innerWidth - 50),
+                        0,
+                        [
+                            { x: 75, y: 0 },
+                            { x: 150, y: 0 },
+                            { x: 200, y: 75 },
+                            { x: 150, y: 150 },
+                            { x: 75, y: 150 },
+                            { x: 25, y: 75 }
+                        ],
+                        color
+                    ).setStrokeStyle(3, 0x000000);
+                }
+
+                this.physics.add.existing(block);
+                block.body.setCollideWorldBounds(true);
+                block.body.setBounce(1);
+                this.blocks.add(block);
+                block.setInteractive();
+
+                // Check if blocks exceed a certain number, then remove 10%
+                if (this.blocks.getChildren().length > 20) {
+                    const blocksToRemove = Math.ceil(this.blocks.getChildren().length * 0.5);
+                    for (let i = 0; i < blocksToRemove; i++) {
+                        const randomBlock = Phaser.Utils.Array.RemoveRandomElement(this.blocks.getChildren());
+                        this.tweens.add({
+                            targets: randomBlock,
+                            scaleX: 0,
+                            scaleY: 0,
+                            alpha: 0,
+                            duration: 300,
+                            ease: 'Power1',
+                            onComplete: function () {
+                                randomBlock.destroy();
+                            }
+                        });
+                        this.puiSound.play();
+                    }
+                }
+            }
+        }
+
+        function resize(gameSize) {
+            if (gameSize.width && gameSize.height) {
+                this.cameras.resize(gameSize.width, gameSize.height);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            game.scale.resize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
