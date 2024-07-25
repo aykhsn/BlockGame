@@ -9,7 +9,7 @@
         body {
             margin: 0;
             display: flex;
-            justify-content: center;
+            justify-content: flex-start; /* 上揃えにする */
             align-items: center;
             height: 100vh;
             background-color: #ffffff;
@@ -33,7 +33,7 @@
             },
             scale: {
                 mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_BOTH
+                autoCenter: Phaser.Scale.CENTER_HORIZONTALLY  // 水平方向にセンタリング
             },
             scene: {
                 preload: preload,
@@ -96,16 +96,16 @@
                     block = this.add.rectangle(
                         Phaser.Math.Between(50, window.innerWidth - 50),
                         0,
-                        200,
-                        100,
+                        160, // 200 * 0.8
+                        80,  // 100 * 0.8
                         color
                     ).setStrokeStyle(3, 0x000000);
                 } else if (shape === 'square') {
                     block = this.add.rectangle(
                         Phaser.Math.Between(50, window.innerWidth - 50),
                         0,
-                        100,
-                        100,
+                        80,  // 100 * 0.8
+                        80,  // 100 * 0.8
                         color
                     ).setStrokeStyle(3, 0x000000);
                 } else if (shape === 'hexagon') {
@@ -113,12 +113,12 @@
                         Phaser.Math.Between(50, window.innerWidth - 50),
                         0,
                         [
-                            { x: 75, y: 0 },
-                            { x: 150, y: 0 },
-                            { x: 200, y: 75 },
-                            { x: 150, y: 150 },
-                            { x: 75, y: 150 },
-                            { x: 25, y: 75 }
+                            { x: 60, y: 0 },   // 75 * 0.8
+                            { x: 120, y: 0 },  // 150 * 0.8
+                            { x: 160, y: 60 }, // 200 * 0.8
+                            { x: 120, y: 120 },// 150 * 0.8
+                            { x: 60, y: 120 }, // 75 * 0.8
+                            { x: 20, y: 60 }   // 25 * 0.8
                         ],
                         color
                     ).setStrokeStyle(3, 0x000000);
@@ -152,15 +152,13 @@
             }
         }
 
-        function resize(gameSize) {
-            if (gameSize.width && gameSize.height) {
-                this.cameras.resize(gameSize.width, gameSize.height);
-            }
+        function resize() {
+            const newHeight = window.innerHeight - 80;
+            game.scale.resize(window.innerWidth, newHeight);
+            this.cameras.resize(window.innerWidth, newHeight);
         }
 
-        window.addEventListener('resize', () => {
-            game.scale.resize(window.innerWidth, window.innerHeight);
-        });
+        window.addEventListener('resize', resize);
     </script>
 </body>
 </html>
