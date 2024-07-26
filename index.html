@@ -36,39 +36,83 @@
         };
 
         const game = new Phaser.Game(config);
+        let boxTween;
 
         function preload() {
             // 画像をロード
             this.load.image('box', 'assets/box.png');
+            this.load.image('box-open', 'assets/box-open.png');
             this.load.image('lid', 'assets/lid.png');
+            this.load.svg('doll', 'assets/doll.svg');
         }
 
         function create() {
+            const groundHeight = this.scale.height * 0.1;
             // 画面のサイズに基づいて箱のサイズを計算
-            const boxHeight =  Math.min(this.scale.height, this.scale.width) / 3;
+            const boxHeight = Math.min(this.scale.height, this.scale.width) / 2.8;
             const boxWidth = boxHeight * (this.textures.get('box').getSourceImage().width / this.textures.get('box').getSourceImage().height);
 
             // 画面の下に箱を配置
-            const box = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight / 2 - 40, 'box');
-            box.setDisplaySize(boxWidth, boxHeight);
+            this.box = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight / 2 - groundHeight, 'box');
+            this.box.setDisplaySize(boxWidth, boxHeight);
 
             // 蓋を箱の上に配置
-            const lid = this.add.sprite(this.scale.width / 2 + boxWidth * 0.88 / 2, this.scale.height - boxHeight - 40, 'lid');
-            lid.setDisplaySize(boxWidth * 1.1, boxHeight * 3 / 10);
-            lid.setOrigin(0.9, 0.5); // 右下を基点に設定
+            this.lid = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - (boxHeight / 5) - groundHeight, 'lid');
+            this.lid.setDisplaySize(boxWidth * 1.08, boxHeight * 53 / 80);
 
-            let isLidOpen = false; // 蓋の状態を追跡
+            // 人形を箱の中に配置
+            this.doll = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - groundHeight, 'doll');
+            this.doll.setDisplaySize(boxWidth * 1.2, boxHeight * 1.8);
+            this.doll.setAlpha(0); // 初期状態では見えないようにする
 
-            // 箱をタップしたときのアニメーションを設定
-            box.setInteractive();
-            box.on('pointerdown', () => {
+            // 箱をタップするとアニメーションを開始
+            this.box.setInteractive();
+            this.box.on('pointerdown', () => {
+                this.box.setTexture('box-open');
+
+                // 蓋が右側に弧を描くように飛ぶアニメーション
                 this.tweens.add({
-                    targets: lid,
-                    angle: isLidOpen ? 0 : 180, // 状態に応じて蓋を開閉
+                    targets: this.lid,
+                    x: this.lid.x + 400,
+                    y: this.lid.y - 400,
+                    angle: 120,
+                    alpha: 0,
                     duration: 1000,
                     ease: 'Power2'
                 });
-                isLidOpen = !isLidOpen; // 蓋の状態を更新
+
+                // 人形が飛び出すアニメーション
+                this.tweens.add({
+                    targets: this.doll,
+                    y: (this.scale.height - boxHeight) / 2,
+                    alpha: 1,
+                    duration: 500,
+                    ease: 'Bounce.easeOut'
+                });
+
+                // 箱と蓋のぴょんぴょんアニメーションを止める
+                this.time.removeEvent(this.jumpEvent);
+                boxTween.stop();
+            });
+
+            // 箱と蓋のぴょんぴょんアニメーション
+            this.jumpEvent = this.time.addEvent({
+                delay: 1000, // 1秒ごとにアニメーションを開始および停止
+                callback: () => {
+                    if (boxTween && boxTween.isPlaying()) {
+                        boxTween.stop();
+                    } else {
+                        boxTween = this.tweens.add({
+                            targets: [this.box, this.lid],
+                            y: '-=10',
+                            yoyo: true,
+                            repeat: -1,
+                            duration: 100,
+                            ease: 'Sine.easeInOut'
+                        });
+                    }
+                },
+                loop: true
             });
         }
 
