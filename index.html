@@ -37,6 +37,7 @@
 
         const game = new Phaser.Game(config);
         let boxTween;
+        let shapes = [];
 
         function preload() {
             // 画像をロード
@@ -45,7 +46,9 @@
             this.load.image('lid', 'assets/lid.png');
             this.load.svg('doll', 'assets/doll.svg');
             this.load.image('spring', 'assets/spring.png');
-            this.load.audio('boyoyon', 'assets/boyoyon.mp3');  // 音声ファイルをロード
+            this.load.audio('boyoyon', 'assets/boyoyon.mp3');
+            this.load.audio('mokkin', 'assets/mokkin.mp3');
+            this.load.audio('nyaa', 'assets/nyaa.mp3');
         }
 
         function create() {
@@ -78,6 +81,8 @@
 
             // 音声を追加
             this.sound.add('boyoyon');
+            this.sound.add('mokkin');
+            this.sound.add('nyaa');
 
             // 箱をタップするとアニメーションを開始
             this.box.setInteractive();
@@ -86,6 +91,8 @@
 
                 this.box.setTexture('box-open');
                 this.sound.play('boyoyon');
+                this.sound.play('mokkin');
+                this.sound.play('nyaa');
 
                 // 蓋が右側に弧を描くように飛ぶアニメーション
                 this.tweens.add({
@@ -121,22 +128,19 @@
                 });
 
                 // 図形が噴水状に飛び出すアニメーション
-                const shapes = createShapes.call(this, this.box.x, this.box.y, boxWidth);
+                shapes = createShapes.call(this, this.box.x, this.box.y, boxWidth);
                 shapes.forEach(shape => {
                     this.tweens.add({
                         targets: shape,
                         x: shape.x + (Math.random() * 400 - 200),
                         y: shape.y - (Math.random() * 400 + 100),
-                        duration: 1500,
-                        ease: 'Cubic.easeOut',
-                        onComplete: () => {
-                            shape.destroy();
-                        }
+                        duration: 1000,
+                        ease: 'Cubic.easeOut'
                     });
                 });
 
                 // 5秒後にリセット
-                this.time.delayedCall(5000, resetBox, [], this);
+                this.time.delayedCall(4000, resetBox, [], this);
 
                 // 箱と蓋のぴょんぴょんアニメーションを止める
                 if (boxTween) {
@@ -179,6 +183,10 @@
                 this.doll.setAlpha(0);
                 this.doll.y = this.scale.height - boxHeight - groundHeight - springHeight / 2;
 
+                // すべての図形を削除
+                shapes.forEach(shape => shape.destroy());
+                shapes = [];
+
                 // ぴょんぴょんアニメーションを再開
                 this.jumpEvent = this.time.addEvent({
                     delay: 1000, // 1秒ごとにアニメーションを開始および停止
@@ -202,7 +210,7 @@
 
             // 図形を作成する関数
             function createShapes(x, y, size) {
-                const colors = [0xffcccc, 0xccffcc, 0xccccff, 0xffffcc, 0xffccff, 0xccffff];
+                const colors = [0xf0abab, 0xabf3ab, 0xafaff4, 0xffd27e, 0xf1abf1, 0x91d7d8];
                 const shapes = [];
                 for (let i = 0; i < 20; i++) {
                     const color = Phaser.Display.Color.IntegerToColor(colors[Math.floor(Math.random() * colors.length)]);
