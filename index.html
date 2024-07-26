@@ -45,6 +45,7 @@
             this.load.image('lid', 'assets/lid.png');
             this.load.svg('doll', 'assets/doll.svg');
             this.load.image('spring', 'assets/spring.png');
+            this.load.audio('boyoyon', 'assets/boyoyon.mp3');  // 音声ファイルをロード
         }
 
         function create() {
@@ -75,10 +76,15 @@
             this.doll.setDepth(-1);
             this.doll.setAlpha(0); // 初期状態では見えないようにする
 
+            // 音声を追加
+            this.sound.add('boyoyon');
+
             // 箱をタップするとアニメーションを開始
             this.box.setInteractive();
             this.box.on('pointerdown', () => {
+
                 this.box.setTexture('box-open');
+                this.sound.play('boyoyon');
 
                 // 蓋が右側に弧を描くように飛ぶアニメーション
                 this.tweens.add({
@@ -110,7 +116,7 @@
                     y: (this.scale.height - boxHeight - groundHeight) / 2,
                     alpha: 1,
                     duration: 500,
-                    ease: 'Bounce.easeOut'
+                    ease: 'Bounce.easeOut',
                 });
 
                 // 箱と蓋のぴょんぴょんアニメーションを止める
