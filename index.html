@@ -119,9 +119,14 @@
                     ease: 'Bounce.easeOut',
                 });
 
+                // 5秒後にリセット
+                this.time.delayedCall(5000, resetBox, [], this);
+
                 // 箱と蓋のぴょんぴょんアニメーションを止める
+                if (boxTween) {
+                    boxTween.stop();
+                }
                 this.time.removeEvent(this.jumpEvent);
-                boxTween.stop();
             });
 
             // 箱と蓋のぴょんぴょんアニメーション
@@ -143,6 +148,41 @@
                 },
                 loop: true
             });
+
+            // リセット関数
+            const resetBox = () => {
+                // 箱の状態をリセット
+                this.box.setTexture('box');
+                this.box.setInteractive();
+                this.box.y = this.scale.height - boxHeight / 2 - groundHeight;
+                this.lid.y = this.scale.height - boxHeight - (boxHeight / 5) - groundHeight;
+                this.lid.x = this.scale.width / 2;
+                this.lid.angle = 0;
+                this.lid.alpha = 1;
+                this.spring.setAlpha(0);
+                this.doll.setAlpha(0);
+                this.doll.y = this.scale.height - boxHeight - groundHeight - springHeight / 2;
+
+                // ぴょんぴょんアニメーションを再開
+                this.jumpEvent = this.time.addEvent({
+                    delay: 1000, // 1秒ごとにアニメーションを開始および停止
+                    callback: () => {
+                        if (boxTween && boxTween.isPlaying()) {
+                            boxTween.stop();
+                        } else {
+                            boxTween = this.tweens.add({
+                                targets: [this.box, this.lid],
+                                y: '-=10',
+                                yoyo: true,
+                                repeat: -1,
+                                duration: 100,
+                                ease: 'Sine.easeInOut'
+                            });
+                        }
+                    },
+                    loop: true
+                });
+            };
         }
 
         function update() {
