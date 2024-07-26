@@ -44,6 +44,7 @@
             this.load.image('box-open', 'assets/box-open.png');
             this.load.image('lid', 'assets/lid.png');
             this.load.svg('doll', 'assets/doll.svg');
+            this.load.image('spring', 'assets/spring.png');
         }
 
         function create() {
@@ -60,9 +61,18 @@
             this.lid = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - (boxHeight / 5) - groundHeight, 'lid');
             this.lid.setDisplaySize(boxWidth * 1.08, boxHeight * 53 / 80);
 
+            // バネを箱の中に配置（バネを箱や人形より背面に配置）
+            const springHeight = boxHeight / 2;
+            this.spring = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - groundHeight, 'spring');
+            this.spring.setOrigin(0.5, 0.9);  // バネの基点を下端に設定
+            this.spring.setDisplaySize(boxWidth * 0.4, springHeight);
+            this.spring.setDepth(-2);
+            this.spring.setAlpha(0); // 初期状態では見えないようにする
+
             // 人形を箱の中に配置
-            this.doll = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - groundHeight, 'doll');
+            this.doll = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - groundHeight - springHeight / 2, 'doll');
             this.doll.setDisplaySize(boxWidth * 1.2, boxHeight * 1.8);
+            this.doll.setDepth(-1);
             this.doll.setAlpha(0); // 初期状態では見えないようにする
 
             // 箱をタップするとアニメーションを開始
@@ -81,10 +91,23 @@
                     ease: 'Power2'
                 });
 
+                // バネが伸縮するアニメーション
+                this.tweens.add({
+                    targets: this.spring,
+                    alpha: 1,
+                    displayHeight: (this.scale.height - boxHeight * 1.8 - groundHeight) / 2,
+                    duration: 500,
+                    ease: 'Bounce.easeOut',
+                    onUpdate: () => {
+                        // バネの伸縮に合わせて人形の位置を調整
+                        this.doll.y = this.spring.y - this.spring.displayHeight + springHeight / 2;
+                    }
+                });
+
                 // 人形が飛び出すアニメーション
                 this.tweens.add({
                     targets: this.doll,
-                    y: (this.scale.height - boxHeight) / 2,
+                    y: (this.scale.height - boxHeight - groundHeight) / 2,
                     alpha: 1,
                     duration: 500,
                     ease: 'Bounce.easeOut'
