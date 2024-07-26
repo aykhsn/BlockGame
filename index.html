@@ -82,6 +82,7 @@
             // 箱をタップするとアニメーションを開始
             this.box.setInteractive();
             this.box.on('pointerdown', () => {
+                this.box.disableInteractive();  // 箱が開いたときに再クリックを無効化
 
                 this.box.setTexture('box-open');
                 this.sound.play('boyoyon');
@@ -117,6 +118,21 @@
                     alpha: 1,
                     duration: 500,
                     ease: 'Bounce.easeOut',
+                });
+
+                // 図形が噴水状に飛び出すアニメーション
+                const shapes = createShapes.call(this, this.box.x, this.box.y, boxWidth);
+                shapes.forEach(shape => {
+                    this.tweens.add({
+                        targets: shape,
+                        x: shape.x + (Math.random() * 400 - 200),
+                        y: shape.y - (Math.random() * 400 + 100),
+                        duration: 1500,
+                        ease: 'Cubic.easeOut',
+                        onComplete: () => {
+                            shape.destroy();
+                        }
+                    });
                 });
 
                 // 5秒後にリセット
@@ -183,6 +199,30 @@
                     loop: true
                 });
             };
+
+            // 図形を作成する関数
+            function createShapes(x, y, size) {
+                const colors = [0xffcccc, 0xccffcc, 0xccccff, 0xffffcc, 0xffccff, 0xccffff];
+                const shapes = [];
+                for (let i = 0; i < 20; i++) {
+                    const color = Phaser.Display.Color.IntegerToColor(colors[Math.floor(Math.random() * colors.length)]);
+                    let shape;
+                    if (i % 3 === 0) {
+                        // 星を作成
+                        shape = this.add.star(x, y, 5, size * 0.1, size * 0.2, color.color);
+                    } else if (i % 3 === 1) {
+                        // 丸を作成
+                        shape = this.add.circle(x, y, size * 0.1, color.color);
+                    } else {
+                        // 三角を作成
+                        shape = this.add.triangle(x, y, 0, 0, size * 0.2, 0, size * 0.1, size * 0.2, color.color);
+                    }
+                    shape.setStrokeStyle(2, 0x000000);
+                    shape.setDepth(-3);
+                    shapes.push(shape);
+                }
+                return shapes;
+            }
         }
 
         function update() {
