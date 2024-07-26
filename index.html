@@ -9,7 +9,7 @@
         body {
             margin: 0;
             display: flex;
-            justify-content: flex-start; /* 上揃えにする */
+            justify-content: center;
             align-items: center;
             height: 100vh;
             background-color: #ffffff;
@@ -22,18 +22,11 @@
         const config = {
             type: Phaser.AUTO,
             width: window.innerWidth,
-            height: window.innerHeight - 80,
+            height: window.innerHeight,
             backgroundColor: '#ffffff',
-            physics: {
-                default: 'arcade',
-                arcade: {
-                    gravity: { y: 300 },
-                    debug: false
-                }
-            },
             scale: {
                 mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_HORIZONTALLY  // 水平方向にセンタリング
+                autoCenter: Phaser.Scale.CENTER_BOTH
             },
             scene: {
                 preload: preload,
@@ -45,120 +38,46 @@
         const game = new Phaser.Game(config);
 
         function preload() {
-            this.load.audio('pui', 'assets/pui.mp3');
+            // 画像をロード
+            this.load.image('box', 'assets/box.png');
+            this.load.image('lid', 'assets/lid.png');
         }
 
         function create() {
-            this.colors = [
-                0xff9999, 0x99ff99, 0x9999ff, 0xffff99, 
-                0xff99ff, 0x99ffff, 0xff6666, 0x66ff66, 
-                0x6666ff, 0xffff66, 0xff66ff, 0x66ffff
-            ];
-            this.shapes = ['rectangle', 'square', 'hexagon'];
-            this.puiSound = this.sound.add('pui');
+            // 画面のサイズに基づいて箱のサイズを計算
+            const boxHeight =  Math.min(this.scale.height, this.scale.width) / 3;
+            const boxWidth = boxHeight * (this.textures.get('box').getSourceImage().width / this.textures.get('box').getSourceImage().height);
 
-            this.nextBlockTime = 0;
+            // 画面の下に箱を配置
+            const box = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight / 2 - 40, 'box');
+            box.setDisplaySize(boxWidth, boxHeight);
 
-            this.blocks = this.physics.add.group({
-                bounceX: 1,
-                bounceY: 0.5,
-                collideWorldBounds: true
-            });
+            // 蓋を箱の上に配置
+            const lid = this.add.sprite(this.scale.width / 2 + boxWidth * 0.88 / 2, this.scale.height - boxHeight - 40, 'lid');
+            lid.setDisplaySize(boxWidth * 1.1, boxHeight * 3 / 10);
+            lid.setOrigin(0.9, 0.5); // 右下を基点に設定
 
-            this.physics.add.collider(this.blocks, this.blocks);
+            let isLidOpen = false; // 蓋の状態を追跡
 
-            this.input.on('gameobjectdown', function (pointer, gameObject) {
+            // 箱をタップしたときのアニメーションを設定
+            box.setInteractive();
+            box.on('pointerdown', () => {
                 this.tweens.add({
-                    targets: gameObject,
-                    scaleX: 0,
-                    scaleY: 0,
-                    alpha: 0,
-                    duration: 300,
-                    ease: 'Power1',
-                    onComplete: function () {
-                        gameObject.destroy();
-                    }
+                    targets: lid,
+                    angle: isLidOpen ? 0 : 180, // 状態に応じて蓋を開閉
+                    duration: 1000,
+                    ease: 'Power2'
                 });
-                this.puiSound.play();
-            }, this);
+                isLidOpen = !isLidOpen; // 蓋の状態を更新
+            });
         }
 
-        function update(time) {
-            if (time > this.nextBlockTime) {
-                this.nextBlockTime = time + 1500;
-
-                const shape = Phaser.Utils.Array.GetRandom(this.shapes);
-                const color = Phaser.Utils.Array.GetRandom(this.colors);
-
-                let block;
-
-                if (shape === 'rectangle') {
-                    block = this.add.rectangle(
-                        Phaser.Math.Between(50, window.innerWidth - 50),
-                        0,
-                        160, // 200 * 0.8
-                        80,  // 100 * 0.8
-                        color
-                    ).setStrokeStyle(3, 0x000000);
-                } else if (shape === 'square') {
-                    block = this.add.rectangle(
-                        Phaser.Math.Between(50, window.innerWidth - 50),
-                        0,
-                        80,  // 100 * 0.8
-                        80,  // 100 * 0.8
-                        color
-                    ).setStrokeStyle(3, 0x000000);
-                } else if (shape === 'hexagon') {
-                    block = this.add.polygon(
-                        Phaser.Math.Between(50, window.innerWidth - 50),
-                        0,
-                        [
-                            { x: 60, y: 0 },   // 75 * 0.8
-                            { x: 120, y: 0 },  // 150 * 0.8
-                            { x: 160, y: 60 }, // 200 * 0.8
-                            { x: 120, y: 120 },// 150 * 0.8
-                            { x: 60, y: 120 }, // 75 * 0.8
-                            { x: 20, y: 60 }   // 25 * 0.8
-                        ],
-                        color
-                    ).setStrokeStyle(3, 0x000000);
-                }
-
-                this.physics.add.existing(block);
-                block.body.setCollideWorldBounds(true);
-                block.body.setBounce(1);
-                this.blocks.add(block);
-                block.setInteractive();
-
-                // Check if blocks exceed a certain number, then remove 10%
-                if (this.blocks.getChildren().length > 20) {
-                    const blocksToRemove = Math.ceil(this.blocks.getChildren().length * 0.5);
-                    for (let i = 0; i < blocksToRemove; i++) {
-                        const randomBlock = Phaser.Utils.Array.RemoveRandomElement(this.blocks.getChildren());
-                        this.tweens.add({
-                            targets: randomBlock,
-                            scaleX: 0,
-                            scaleY: 0,
-                            alpha: 0,
-                            duration: 300,
-                            ease: 'Power1',
-                            onComplete: function () {
-                                randomBlock.destroy();
-                            }
-                        });
-                        this.puiSound.play();
-                    }
-                }
-            }
+        function update() {
         }
 
-        function resize() {
-            const newHeight = window.innerHeight - 80;
-            game.scale.resize(window.innerWidth, newHeight);
-            this.cameras.resize(window.innerWidth, newHeight);
-        }
-
-        window.addEventListener('resize', resize);
+        window.addEventListener('resize', () => {
+            game.scale.resize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
