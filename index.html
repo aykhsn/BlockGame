@@ -2,7 +2,6 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
     <style>
@@ -12,7 +11,7 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: #ffffff;
+            background-color: #fdefa9;
             overflow: hidden;
         }
     </style>
@@ -23,7 +22,7 @@
             type: Phaser.AUTO,
             width: window.innerWidth,
             height: window.innerHeight,
-            backgroundColor: '#ffffff',
+            backgroundColor: '#fdefa9',
             scale: {
                 mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH
@@ -38,77 +37,123 @@
         const game = new Phaser.Game(config);
         let boxTween;
         let shapes = [];
+        let isBoxOpen = false;
+        let animationPlaying = false;
+        let characters = ['neko', 'usagi', 'bird', 'banana'];
+        let character;
 
         function preload() {
-            // 画像をロード
             this.load.image('box', 'assets/box.png');
             this.load.image('box-open', 'assets/box-open.png');
             this.load.image('lid', 'assets/lid.png');
-            this.load.svg('doll', 'assets/doll.svg');
+            this.load.image('neko', 'assets/neko2_ba.png');
+            this.load.image('usagi', 'assets/rabbit2_ba.png');
+            this.load.image('bird', 'assets/pikopo_ba.png');
+            this.load.image('banana', 'assets/banana_ba.png');
             this.load.image('spring', 'assets/spring.png');
             this.load.audio('boyoyon', 'assets/boyoyon.mp3');
             this.load.audio('mokkin', 'assets/mokkin.mp3');
-            this.load.audio('nyaa', 'assets/nyaa.mp3');
+            this.load.audio('jajan', 'assets/jajan.mp3');
+            this.load.audio('panpakapan', 'assets/panpakapan.mp3');
+            this.load.audio('yahho', 'assets/yahho.mp3');
+            this.load.audio('yatta', 'assets/yatta.mp3');
+            this.load.audio('domodesu', 'assets/domodesu.mp3');
+            this.load.audio('sonochoshi', 'assets/sonochoshi.mp3');
+            this.load.audio('banzai', 'assets/banzai.mp3');
+            this.load.audio('haihai', 'assets/haihai.mp3');
+            this.load.audio('tararara', 'assets/tararara.mp3');
+            this.load.audio('dododo', 'assets/dododo.mp3');
+            this.load.image('background', 'assets/bg-paper.jpg');
         }
 
         function create() {
+            const bg = this.add.image(this.scale.width / 2, this.scale.height / 2, 'background').setDisplaySize(this.scale.width, this.scale.height);
+            bg.setAlpha(0.5);
+            bg.setDepth(-10);
+
             const groundHeight = this.scale.height * 0.1;
-            // 画面のサイズに基づいて箱のサイズを計算
             const boxHeight = Math.min(this.scale.height, this.scale.width) / 2.8;
             const boxWidth = boxHeight * (this.textures.get('box').getSourceImage().width / this.textures.get('box').getSourceImage().height);
 
-            // 画面の下に箱を配置
             this.box = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight / 2 - groundHeight, 'box');
             this.box.setDisplaySize(boxWidth, boxHeight);
 
-            // 蓋を箱の上に配置
             this.lid = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - (boxHeight / 5) - groundHeight, 'lid');
             this.lid.setDisplaySize(boxWidth * 1.08, boxHeight * 53 / 80);
+            this.lid.setAlpha(1);
 
-            // バネを箱の中に配置（バネを箱や人形より背面に配置）
             const springHeight = boxHeight / 2;
             this.spring = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - groundHeight, 'spring');
-            this.spring.setOrigin(0.5, 0.9);  // バネの基点を下端に設定
+            this.spring.setOrigin(0.5, 0.9);
             this.spring.setDisplaySize(boxWidth * 0.4, springHeight);
             this.spring.setDepth(-2);
-            this.spring.setAlpha(0); // 初期状態では見えないようにする
+            this.spring.setAlpha(0);
 
-            // 人形を箱の中に配置
-            this.doll = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - groundHeight - springHeight / 2, 'doll');
-            this.doll.setDisplaySize(boxWidth * 1.2, boxHeight * 1.8);
-            this.doll.setDepth(-1);
-            this.doll.setAlpha(0); // 初期状態では見えないようにする
+            this.neko = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - groundHeight - springHeight / 2, 'neko');
+            this.neko.setDisplaySize(boxWidth * 1.2, boxHeight * 1.8);
+            this.neko.setDepth(-1);
+            this.neko.setAlpha(0);
 
-            // 音声を追加
+            this.usagi = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - groundHeight - springHeight / 2, 'usagi');
+            this.usagi.setDisplaySize(boxWidth * 1.2, boxHeight * 1.8);
+            this.usagi.setDepth(-1);
+            this.usagi.setAlpha(0);
+
+            this.bird = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - groundHeight - springHeight / 2, 'bird');
+            this.bird.setDisplaySize(boxWidth * 1.2, boxHeight * 1.8);
+            this.bird.setDepth(-1);
+            this.bird.setAlpha(0);
+
+            this.banana = this.add.sprite(this.scale.width / 2, this.scale.height - boxHeight - groundHeight - springHeight / 2, 'banana');
+            this.banana.setDisplaySize(boxWidth * 1.2, boxHeight * 1.8);
+            this.banana.setDepth(-1);
+            this.banana.setAlpha(0);
+
             this.sound.add('boyoyon');
             this.sound.add('mokkin');
-            this.sound.add('nyaa');
+            this.sound.add('jajan');
+            this.sound.add('panpakapan');
+            this.sound.add('yahho');
+            this.sound.add('yatta');
+            this.sound.add('sonochoshi');
+            this.sound.add('domodesu');
+            this.sound.add('banzai');
+            this.sound.add('haihai');
+            this.sound.add('tararara');
+            this.sound.add('dododo');
 
-            // 箱をタップするとアニメーションを開始
             this.box.setInteractive();
             this.box.on('pointerdown', handleBoxClick, this);
 
-            // リセット関数
             const resetBox = () => {
-                // 箱の状態をリセット
+                this.sound.play('tararara');
                 this.box.setTexture('box');
                 this.box.setInteractive();
                 this.box.y = this.scale.height - boxHeight / 2 - groundHeight;
-                this.lid.y = this.scale.height - boxHeight - (boxHeight / 5) - groundHeight;
                 this.lid.x = this.scale.width / 2;
+                this.lid.y = this.scale.height - boxHeight - (boxHeight / 5) - groundHeight;
                 this.lid.angle = 0;
                 this.lid.alpha = 1;
                 this.spring.setAlpha(0);
-                this.doll.setAlpha(0);
-                this.doll.y = this.scale.height - boxHeight - groundHeight - springHeight / 2;
-                this.doll.disableInteractive(); // リセット時にインタラクションを無効化
-
-                // すべての図形を削除
+                this.spring.setDisplaySize(boxWidth * 0.4, springHeight); // reset spring height
+                this.neko.setAlpha(0);
+                this.neko.y = this.scale.height - boxHeight - groundHeight - springHeight / 2;
+                this.neko.disableInteractive();
+                this.usagi.setAlpha(0);
+                this.usagi.y = this.scale.height - boxHeight - groundHeight - springHeight / 2;
+                this.usagi.disableInteractive();
+                this.bird.setAlpha(0);
+                this.bird.y = this.scale.height - boxHeight - groundHeight - springHeight / 2;
+                this.bird.disableInteractive();
+                this.banana.setAlpha(0);
+                this.banana.y = this.scale.height - boxHeight - groundHeight - springHeight / 2;
+                this.banana.disableInteractive();
                 shapes.forEach(shape => shape.destroy());
                 shapes = [];
+                isBoxOpen = false;
+                animationPlaying = false; // アニメーションが終わったことを示す
             };
 
-            // 図形を作成する関数
             function createShapes(x, y, size) {
                 const colors = [0xf0abab, 0xabf3ab, 0xafaff4, 0xffd27e, 0xf1abf1, 0x91d7d8];
                 const shapes = [];
@@ -116,16 +161,13 @@
                     const color = Phaser.Display.Color.IntegerToColor(colors[Math.floor(Math.random() * colors.length)]);
                     let shape;
                     if (i % 3 === 0) {
-                        // 星を作成
                         shape = this.add.star(x, y, 5, size * 0.1, size * 0.2, color.color);
                     } else if (i % 3 === 1) {
-                        // 丸を作成
                         shape = this.add.circle(x, y, size * 0.1, color.color);
                     } else {
-                        // 三角を作成
                         shape = this.add.triangle(x, y, 0, 0, size * 0.2, 0, size * 0.1, size * 0.2, color.color);
                     }
-                    shape.setStrokeStyle(2, 0x000000);
+                    shape.setStrokeStyle(3, 0x000000);
                     shape.setDepth(-3);
                     shapes.push(shape);
                 }
@@ -133,101 +175,124 @@
             }
 
             function handleBoxClick() {
-                this.box.disableInteractive();  // 箱が開いたときに再クリックを無効化
+                if (animationPlaying) return; // アニメーション中はクリックを無効化
+                if (isBoxOpen) {
+                    resetBox();
+                } else {
+                    const dododoSound = this.sound.add('dododo');
+                    dododoSound.play();
+                    this.time.delayedCall(2000, () => {
+                        dododoSound.stop();
+                    });
 
-                // 箱と蓋のぴょんぴょんアニメーション
-                boxTween = this.tweens.add({
-                    targets: [this.box, this.lid],
-                    y: '-=10',
-                    yoyo: true,
-                    repeat: 6,
-                    duration: 140,
-                    ease: 'Sine.easeInOut',
-                    onComplete: () => {
-                        this.sound.play('boyoyon');
-                        this.sound.play('mokkin');
-                        this.sound.play('nyaa');
+                    this.box.disableInteractive();
+                    animationPlaying = true; // アニメーション開始
 
-                        this.box.setTexture('box-open');
+                    boxTween = this.tweens.add({
+                        targets: [this.box, this.lid],
+                        y: '-=10',
+                        yoyo: true,
+                        repeat: 6,
+                        duration: 140,
+                        ease: 'Sine.easeInOut',
+                        onComplete: () => {
+                            this.sound.play('boyoyon');
+                            this.sound.play('mokkin');
+                            this.sound.play('jajan');
 
-                        // 蓋が右側に弧を描くように飛ぶアニメーション
-                        this.tweens.add({
-                            targets: this.lid,
-                            x: this.lid.x + 400,
-                            y: this.lid.y - 400,
-                            angle: 120,
-                            alpha: 0,
-                            duration: 1000,
-                            ease: 'Power2'
-                        });
-
-                        // バネが伸縮するアニメーション
-                        this.tweens.add({
-                            targets: this.spring,
-                            alpha: 1,
-                            displayHeight: (this.scale.height - boxHeight * 1.8 - groundHeight) / 2,
-                            duration: 500,
-                            ease: 'Bounce.easeOut',
-                            onUpdate: () => {
-                                // バネの伸縮に合わせて人形の位置を調整
-                                this.doll.y = this.spring.y - this.spring.displayHeight + springHeight / 2;
-                            }
-                        });
-
-                        // 人形が飛び出すアニメーション
-                        this.tweens.add({
-                            targets: this.doll,
-                            y: (this.scale.height - boxHeight - groundHeight) / 2,
-                            alpha: 1,
-                            duration: 500,
-                            ease: 'Bounce.easeOut',
-                        });
-
-                        // 図形が噴水状に飛び出すアニメーション
-                        shapes = createShapes.call(this, this.box.x, this.box.y, boxWidth);
-                        shapes.forEach(shape => {
-                            this.tweens.add({
-                                targets: shape,
-                                x: shape.x + (Math.random() * 400 - 200),
-                                y: shape.y - (Math.random() * 400 + 100),
-                                duration: 1500,
-                                ease: 'Cubic.easeOut'
+                            const sounds = ['panpakapan', 'yahho', 'yatta', 'sonochoshi', 'banzai', 'haihai', 'domodesu'];
+                            const randomSound = Phaser.Utils.Array.GetRandom(sounds);
+                            this.time.delayedCall(600, () => {
+                                this.sound.play(randomSound);
                             });
-                        });
 
-                        // 人形にクリックインタラクションを追加
-                        this.doll.setInteractive();
-                        this.doll.on('pointerdown', () => {
-                            // 人形とバネが連動して上下に揺れるアニメーション
+                            this.box.setTexture('box-open');
+                            isBoxOpen = true;
+
+                            character = Phaser.Utils.Array.GetRandom(characters);
+
+                            this.lid.setAlpha(1); // 蓋を表示
+
                             this.tweens.add({
-                                targets: this.doll,
-                                y: this.doll.y + 20,
-                                yoyo: true,
-                                repeat: 6,
-                                duration: 100,
-                                ease: 'Sine.easeInOut'
+                                targets: this.lid,
+                                x: this.lid.x + 400,
+                                y: this.lid.y - 400,
+                                angle: 120,
+                                alpha: 0,
+                                duration: 1000,
+                                ease: 'Power2',
+                                onComplete: () => {
+                                    this.lid.x = this.scale.width / 2;
+                                    this.lid.y = this.scale.height - boxHeight - (boxHeight / 5) - groundHeight;
+                                    this.lid.angle = 0;
+                                    this.lid.alpha = 0; // 完了時に透明に設定
+                                }
                             });
 
                             this.tweens.add({
                                 targets: this.spring,
-                                displayHeight: this.spring.displayHeight * 0.8,
-                                yoyo: true,
-                                repeat: 6,
-                                duration: 100,
-                                ease: 'Sine.easeInOut'
+                                alpha: 1,
+                                displayHeight: (this.scale.height - boxHeight * 1.8 - groundHeight) / 2,
+                                duration: 500,
+                                ease: 'Bounce.easeOut',
+                                onUpdate: () => {
+                                    this[character].y = this.spring.y - this.spring.displayHeight + springHeight / 2;
+                                }
                             });
-                        });
 
-                        // 再度箱をクリックするとリセット
-                        this.box.setInteractive();
-                        this.box.on('pointerdown', resetBox, this);
-                    }
-                });
+                            this.tweens.add({
+                                targets: this[character],
+                                y: (this.scale.height - boxHeight - groundHeight) / 2,
+                                alpha: 1,
+                                duration: 500,
+                                ease: 'Bounce.easeOut',
+                            });
+
+                            shapes = createShapes.call(this, this.box.x, this.box.y, boxWidth);
+                            shapes.forEach(shape => {
+                                this.tweens.add({
+                                    targets: shape,
+                                    x: shape.x + (Math.random() * 400 - 200),
+                                    y: shape.y - (Math.random() * 400 + 100),
+                                    duration: 1500,
+                                    ease: 'Cubic.easeOut'
+                                });
+                            });
+
+                            this[character].setInteractive();
+                            this[character].on('pointerdown', () => {
+                                this.sound.play('boyoyon');
+
+                                this.tweens.add({
+                                    targets: this[character],
+                                    y: this[character].y + 20,
+                                    yoyo: true,
+                                    repeat: 6,
+                                    duration: 100,
+                                    ease: 'Sine.easeInOut'
+                                });
+
+                                this.tweens.add({
+                                    targets: this.spring,
+                                    displayHeight: this.spring.displayHeight * 0.8,
+                                    yoyo: true,
+                                    repeat: 6,
+                                    duration: 100,
+                                    ease: 'Sine.easeInOut'
+                                });
+                            });
+
+                            this.time.delayedCall(2000, () => {
+                                this.box.setInteractive();
+                                animationPlaying = false; // アニメーション終了
+                            });
+                        }
+                    });
+                }
             }
         }
 
-        function update() {
-        }
+        function update() {}
 
         window.addEventListener('resize', () => {
             game.scale.resize(window.innerWidth, window.innerHeight);
