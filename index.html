@@ -86,88 +86,7 @@
 
             // 箱をタップするとアニメーションを開始
             this.box.setInteractive();
-            this.box.on('pointerdown', () => {
-                this.box.disableInteractive();  // 箱が開いたときに再クリックを無効化
-
-                this.box.setTexture('box-open');
-                this.sound.play('boyoyon');
-                this.sound.play('mokkin');
-                this.sound.play('nyaa');
-
-                // 蓋が右側に弧を描くように飛ぶアニメーション
-                this.tweens.add({
-                    targets: this.lid,
-                    x: this.lid.x + 400,
-                    y: this.lid.y - 400,
-                    angle: 120,
-                    alpha: 0,
-                    duration: 1000,
-                    ease: 'Power2'
-                });
-
-                // バネが伸縮するアニメーション
-                this.tweens.add({
-                    targets: this.spring,
-                    alpha: 1,
-                    displayHeight: (this.scale.height - boxHeight * 1.8 - groundHeight) / 2,
-                    duration: 500,
-                    ease: 'Bounce.easeOut',
-                    onUpdate: () => {
-                        // バネの伸縮に合わせて人形の位置を調整
-                        this.doll.y = this.spring.y - this.spring.displayHeight + springHeight / 2;
-                    }
-                });
-
-                // 人形が飛び出すアニメーション
-                this.tweens.add({
-                    targets: this.doll,
-                    y: (this.scale.height - boxHeight - groundHeight) / 2,
-                    alpha: 1,
-                    duration: 500,
-                    ease: 'Bounce.easeOut',
-                });
-
-                // 図形が噴水状に飛び出すアニメーション
-                shapes = createShapes.call(this, this.box.x, this.box.y, boxWidth);
-                shapes.forEach(shape => {
-                    this.tweens.add({
-                        targets: shape,
-                        x: shape.x + (Math.random() * 400 - 200),
-                        y: shape.y - (Math.random() * 400 + 100),
-                        duration: 1000,
-                        ease: 'Cubic.easeOut'
-                    });
-                });
-
-                // 5秒後にリセット
-                this.time.delayedCall(4000, resetBox, [], this);
-
-                // 箱と蓋のぴょんぴょんアニメーションを止める
-                if (boxTween) {
-                    boxTween.stop();
-                }
-                this.time.removeEvent(this.jumpEvent);
-            });
-
-            // 箱と蓋のぴょんぴょんアニメーション
-            this.jumpEvent = this.time.addEvent({
-                delay: 1000, // 1秒ごとにアニメーションを開始および停止
-                callback: () => {
-                    if (boxTween && boxTween.isPlaying()) {
-                        boxTween.stop();
-                    } else {
-                        boxTween = this.tweens.add({
-                            targets: [this.box, this.lid],
-                            y: '-=10',
-                            yoyo: true,
-                            repeat: -1,
-                            duration: 100,
-                            ease: 'Sine.easeInOut'
-                        });
-                    }
-                },
-                loop: true
-            });
+            this.box.on('pointerdown', handleBoxClick, this);
 
             // リセット関数
             const resetBox = () => {
@@ -182,30 +101,11 @@
                 this.spring.setAlpha(0);
                 this.doll.setAlpha(0);
                 this.doll.y = this.scale.height - boxHeight - groundHeight - springHeight / 2;
+                this.doll.disableInteractive(); // リセット時にインタラクションを無効化
 
                 // すべての図形を削除
                 shapes.forEach(shape => shape.destroy());
                 shapes = [];
-
-                // ぴょんぴょんアニメーションを再開
-                this.jumpEvent = this.time.addEvent({
-                    delay: 1000, // 1秒ごとにアニメーションを開始および停止
-                    callback: () => {
-                        if (boxTween && boxTween.isPlaying()) {
-                            boxTween.stop();
-                        } else {
-                            boxTween = this.tweens.add({
-                                targets: [this.box, this.lid],
-                                y: '-=10',
-                                yoyo: true,
-                                repeat: -1,
-                                duration: 100,
-                                ease: 'Sine.easeInOut'
-                            });
-                        }
-                    },
-                    loop: true
-                });
             };
 
             // 図形を作成する関数
@@ -230,6 +130,99 @@
                     shapes.push(shape);
                 }
                 return shapes;
+            }
+
+            function handleBoxClick() {
+                this.box.disableInteractive();  // 箱が開いたときに再クリックを無効化
+
+                // 箱と蓋のぴょんぴょんアニメーション
+                boxTween = this.tweens.add({
+                    targets: [this.box, this.lid],
+                    y: '-=10',
+                    yoyo: true,
+                    repeat: 6,
+                    duration: 140,
+                    ease: 'Sine.easeInOut',
+                    onComplete: () => {
+                        this.sound.play('boyoyon');
+                        this.sound.play('mokkin');
+                        this.sound.play('nyaa');
+
+                        this.box.setTexture('box-open');
+
+                        // 蓋が右側に弧を描くように飛ぶアニメーション
+                        this.tweens.add({
+                            targets: this.lid,
+                            x: this.lid.x + 400,
+                            y: this.lid.y - 400,
+                            angle: 120,
+                            alpha: 0,
+                            duration: 1000,
+                            ease: 'Power2'
+                        });
+
+                        // バネが伸縮するアニメーション
+                        this.tweens.add({
+                            targets: this.spring,
+                            alpha: 1,
+                            displayHeight: (this.scale.height - boxHeight * 1.8 - groundHeight) / 2,
+                            duration: 500,
+                            ease: 'Bounce.easeOut',
+                            onUpdate: () => {
+                                // バネの伸縮に合わせて人形の位置を調整
+                                this.doll.y = this.spring.y - this.spring.displayHeight + springHeight / 2;
+                            }
+                        });
+
+                        // 人形が飛び出すアニメーション
+                        this.tweens.add({
+                            targets: this.doll,
+                            y: (this.scale.height - boxHeight - groundHeight) / 2,
+                            alpha: 1,
+                            duration: 500,
+                            ease: 'Bounce.easeOut',
+                        });
+
+                        // 図形が噴水状に飛び出すアニメーション
+                        shapes = createShapes.call(this, this.box.x, this.box.y, boxWidth);
+                        shapes.forEach(shape => {
+                            this.tweens.add({
+                                targets: shape,
+                                x: shape.x + (Math.random() * 400 - 200),
+                                y: shape.y - (Math.random() * 400 + 100),
+                                duration: 1500,
+                                ease: 'Cubic.easeOut'
+                            });
+                        });
+
+                        // 人形にクリックインタラクションを追加
+                        this.doll.setInteractive();
+                        this.doll.on('pointerdown', () => {
+                            // 人形とバネが連動して上下に揺れるアニメーション
+                            this.tweens.add({
+                                targets: this.doll,
+                                y: this.doll.y + 20,
+                                yoyo: true,
+                                repeat: 6,
+                                duration: 100,
+                                ease: 'Sine.easeInOut'
+                            });
+
+                            this.tweens.add({
+                                targets: this.spring,
+                                displayHeight: this.spring.displayHeight * 0.8,
+                                yoyo: true,
+                                repeat: 6,
+                                duration: 100,
+                                ease: 'Sine.easeInOut'
+                            });
+                        });
+
+                        // 再度箱をクリックするとリセット
+                        this.box.setInteractive();
+                        this.box.on('pointerdown', resetBox, this);
+                    }
+                });
             }
         }
 
